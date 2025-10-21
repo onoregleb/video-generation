@@ -128,18 +128,20 @@ def run_video_generation(process_id: str, user_id: str, model_image: str, prompt
             "message": "Starting video generation"
         })
         
-        # Run task.sh directly
+        # Run task.sh directly with real-time output
         print(f"Starting video generation for process {process_id}")
+        print(f"=" * 50)
         result = subprocess.run(
             [SCRIPT_PATH],
             env=env,
-            capture_output=True,
-            text=True,
+            stdout=None,  # Output to console in real-time
+            stderr=subprocess.STDOUT,  # Merge stderr to stdout
             timeout=3600  # 1 hour timeout
         )
+        print(f"=" * 50)
         
         if result.returncode != 0:
-            error_msg = result.stderr if result.stderr else "Unknown error during video generation"
+            error_msg = f"Script exited with code {result.returncode}"
             end_time = time.time()
             start_time = process_status[process_id].get("start_time", end_time)
             generation_time = end_time - start_time
