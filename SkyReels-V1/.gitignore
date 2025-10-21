@@ -1,0 +1,17 @@
+__pycache__/
+checkpoint/*
+checkpoint
+results/*
+.DS_Store
+results/*
+*.png
+*.jpg
+*.log*
+*.json
+scripts/transformer/*
+compile_cache
+scripts/.gradio/*
+*.pkl
+*.csv
+*.jsonl
+*.mp4

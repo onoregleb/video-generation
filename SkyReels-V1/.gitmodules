@@ -1,0 +1,3 @@
+[submodule "third_party/paraattention"]
+	path = third_party/paraattention
+	url = https://github.com/Howe2018/ParaAttention.git
