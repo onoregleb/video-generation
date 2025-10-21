@@ -1,6 +1,31 @@
+# FastAPI Server Dependencies
 fastapi>=0.68.0
 uvicorn>=0.15.0
-boto3>=1.18.0
-requests>=2.25.0
 pydantic>=1.8.0
-python-multipart>=0.0.5 
+python-multipart>=0.0.5
+
+# AWS S3
+boto3>=1.18.0
+
+# HTTP requests
+requests>=2.25.0
+
+# SkyReels-V2 Dependencies
+torch==2.5.1
+torchvision==0.20.1
+opencv-python==4.10.0.84
+diffusers>=0.31.0
+transformers==4.49.0
+tokenizers==0.21.1
+accelerate==1.6.0
+tqdm
+imageio
+imageio-ffmpeg
+easydict
+ftfy
+numpy>=1.23.5,<2
+xfuser
+
+# Optional: Flash Attention for faster inference (requires CUDA)
+# Uncomment if you have compatible GPU
+# flash_attn

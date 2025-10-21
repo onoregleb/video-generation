@@ -1,33 +1,45 @@
+version: '3.8'
+
 services:
-  video-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: video-generation-api
-    restart: always
+  skyreels-api:
+    build: .
+    container_name: skyreels-v2-api
     ports:
       - "8000:8000"
-    volumes:
-      - ./data/outputs:/mnt/tank/scratch/edubskiy/outputs
-      - ./data/huggingface_cache:/mnt/tank/scratch/edubskiy/huggingface_cache
-      - ./data/models:/app/models
     environment:
-      - SCRIPT_PATH=/app/task.sh
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-storage.modera.fashion}
-      - S3_REGION=${S3_REGION:-eu-central-2}
+      # S3 Configuration
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_REGION=${S3_REGION}
       - S3_ACCESS_KEY=${S3_ACCESS_KEY}
       - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-}
+      
+      # GPU Configuration
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
-      - OUTPUT_BASE_DIR=/mnt/tank/scratch/edubskiy/outputs
-      - HF_HOME=/mnt/tank/scratch/edubskiy/huggingface_cache
-      - TRANSFORMERS_CACHE=/mnt/tank/scratch/edubskiy/huggingface_cache
+      
+      # Cache and Output Directories
+      - HF_HOME=/app/data/huggingface_cache
+      - TRANSFORMERS_CACHE=/app/data/huggingface_cache
+      - OUTPUT_BASE_DIR=/app/data/outputs
+    
+    volumes:
+      # Persistent storage for models and outputs
+      - ./data/huggingface_cache:/app/data/huggingface_cache
+      - ./data/outputs:/app/data/outputs
+    
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
+              count: 1
               capabilities: [gpu]
-
-networks:
-  default:
-    driver: bridge 
+    
+    restart: unless-stopped
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

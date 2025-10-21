@@ -1,105 +1,171 @@
-# Video Generation Service
+# SkyReels-V2 Image-to-Video API
 
-This repository contains a Docker-based video generation service for creating videos using SkyReels models on AWS EC2 instances with GPU support.
+Production-ready Docker-based Image-to-Video service using **SkyReels-V2**. Simplified API for converting images to videos with 540P and 720P resolution support.
 
-## Prerequisites
+## 🌟 Features
+
+- **State-of-the-art** Image-to-Video generation using SkyReels-V2
+- **Automatic image resizing** based on selected resolution
+- **540P and 720P** resolution support
+- **Optional prompts** - use default or provide custom prompts
+- **Direct diffusers integration** - no shell scripts required
+- **GPU-accelerated** with CUDA support
+- **AWS S3 integration** for video storage
+- **Queue-based processing** for multiple concurrent requests
+- **Docker containerization** for easy deployment
+- **RESTful API** with FastAPI
+
+## 📋 Prerequisites
 
 - Docker & Docker Compose
-- NVIDIA Container Toolkit (for GPU support)
-- AWS EC2 instance with GPU (recommended: g5.xlarge or higher)
-- AWS S3 bucket for video storage
+- NVIDIA GPU with CUDA support (12.1+)
+- NVIDIA Container Toolkit
+- AWS S3 bucket (or S3-compatible storage)
+- Minimum 50GB GPU RAM for 14B models
 
-## Architecture
+## 🚀 Quick Start
 
-1. **FastAPI Server** - REST API for accepting video generation requests
-2. **Task Queue** - Sequential processing of video generation jobs (single GPU)
-3. **SkyReels-V1** - Video generation engine using Diffusers
-4. **AWS S3** - Storage for generated videos
-
-## File Structure
-
-- `Dockerfile` - Container definition
-- `docker-compose.yml` - Container orchestration
-- `.env` - Environment variables (create from template)
-- `server_cloud.py` - Main API server
-- `task.sh` - Video generation bash script
-- `setup.sh` - Setup and launch helper script
-- `requirements.txt` - Python dependencies
-- `SkyReels-V1/` - Video generation model code
-
-## Quick Start
-
-### 1. Clone the repository
+### 1. Clone and Setup
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+# Clone repository
+git clone <your-repo-url>
+cd Sky
+
+# Create .env file from example
+cp env.example .env
+# Edit .env with your S3 credentials
 ```
 
-### 2. Configure environment variables
+### 2. Configure Environment
 
-Create a `.env` file with your AWS credentials:
+Edit `.env` file:
 
 ```bash
-# AWS S3 Configuration
 S3_BUCKET_NAME=your-bucket-name
 S3_REGION=eu-central-2
 S3_ACCESS_KEY=your-access-key
 S3_SECRET_KEY=your-secret-key
-
-# GPU Configuration (default: 0)
 CUDA_VISIBLE_DEVICES=0
 ```
 
-### 3. Run the setup script
+### 3. Create Data Directories
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+mkdir -p data/outputs data/huggingface_cache
 ```
 
-The setup script will:
-- Create necessary directories (`data/outputs`, `data/huggingface_cache`, `data/models`)
-- Verify Docker installation
-- Start the Docker container with GPU support
-
-### 4. Manual Setup (Alternative)
+### 4. Build and Run
 
 ```bash
-# Create required directories
-mkdir -p data/outputs data/huggingface_cache data/models
-
-# Start the container
+# Build and start the container
 docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
 ```
 
-## API Usage
+The API will be available at `http://localhost:8000`
 
-The API will be available at `http://localhost:8000/`.
+## 📖 API Documentation
 
-### Generate Video
+### Generate Video from Image
+
+**Endpoint:** `POST /generate`
+
+**Minimal Example (with default prompt):**
 
 ```bash
-curl -X POST http://localhost:8000/run \
+curl -X POST http://localhost:8000/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "user_id": "test_user",
-    "model_image": "Skywork/SkyReels-V2-I2V-14B-540P",
-    "prompt": "A beautiful young woman touches her hair",
-    "image_url": "https://example.com/image.jpg"
+    "user_id": "user123",
+    "image_url": "https://example.com/portrait.jpg",
+    "resolution": "540P"
+  }'
+```
+
+**Example with Custom Prompt:**
+
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "image_url": "https://example.com/portrait.jpg",
+    "resolution": "540P",
+    "prompt": "A beautiful woman touching her hair gracefully"
+  }'
+```
+
+**720P High Quality Example:**
+
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "image_url": "https://example.com/portrait.jpg",
+    "resolution": "720P",
+    "prompt": "A model walking on a runway with confidence",
+    "num_frames": 97,
+    "fps": 24
   }'
 ```
 
 **Response:**
+
 ```json
 {
-  "process_id": "uuid-generated-process-id"
+  "process_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-**Note:** Images are automatically resized and center-cropped to **960x544** pixels. You can provide images in any size or aspect ratio. See [IMAGE_PROCESSING.md](IMAGE_PROCESSING.md) for details.
+### Request Parameters
+
+#### Required Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `user_id` | string | User identifier for organizing files |
+| `image_url` | string | URL of input image (HTTP/HTTPS) |
+
+#### Optional Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `resolution` | string | `"540P"` | Resolution: `"540P"` or `"720P"` |
+| `prompt` | string | `"A cinematic video with smooth motion and natural movement"` | Description of desired animation (optional) |
+| `num_frames` | int | `97` | Number of frames (97 ≈ 4 sec @ 24 FPS) |
+| `fps` | int | `24` | Frames per second |
+| `guidance_scale` | float | `5.0` | Guidance scale (3.0-8.0) |
+| `shift` | float | `5.0` | Shift parameter for generation |
+| `inference_steps` | int | `30` | Inference steps (more = better quality, slower) |
+| `seed` | int | `null` | Random seed (auto-generated if not provided) |
+| `use_teacache` | bool | `true` | Speed optimization (recommended) |
+| `teacache_thresh` | float | `0.3` | Teacache threshold (0.1-0.3) |
+| `use_ret_steps` | bool | `true` | Retention steps for quality |
+| `offload` | bool | `true` | CPU offloading to save VRAM |
+
+### Automatic Image Resizing
+
+The API automatically resizes images based on the selected resolution:
+
+- **540P**: 960x544 (landscape) or 544x960 (portrait)
+- **720P**: 1280x720 (landscape) or 720x1280 (portrait)
+
+Portrait images are automatically converted to vertical videos, landscape images to horizontal videos.
+
+### Supported Resolutions
+
+| Resolution | Dimensions | VRAM Required | Use Case |
+|------------|------------|---------------|----------|
+| **540P** | 960x544 | ~24GB | Recommended for most cases |
+| **720P** | 1280x720 | >60GB | High quality output |
 
 ### Check Status
+
+**Endpoint:** `POST /status`
 
 ```bash
 curl -X POST http://localhost:8000/status \
@@ -108,124 +174,203 @@ curl -X POST http://localhost:8000/status \
 ```
 
 **Response (Processing):**
+
 ```json
 {
   "status": "processing",
-  "user_id": "test_user"
+  "user_id": "user123",
+  "message": "Generating video..."
 }
 ```
 
 **Response (Completed):**
+
 ```json
 {
   "status": "done",
-  "user_id": "test_user",
-  "video_url": "https://your-bucket.s3.region.amazonaws.com/videos/user_id/process_id.mp4",
-  "generation_time_seconds": 222.22
+  "user_id": "user123",
+  "video_url": "https://your-bucket.s3.region.amazonaws.com/videos/user123/process-id.mp4",
+  "generation_time_seconds": 245.67
 }
 ```
 
 **Response (Failed):**
+
 ```json
 {
   "status": "failed",
-  "user_id": "test_user",
-  "error": "Error message description",
-  "generation_time_seconds": 54.33
+  "user_id": "user123",
+  "error": "Error description",
+  "generation_time_seconds": 30.5
 }
 ```
 
-**Time Tracking:**
-- `generation_time_seconds`: Total time taken for video generation in seconds (also logged to console)
+### Health Check
+
+**Endpoint:** `GET /health`
+
+```bash
+curl http://localhost:8000/health
+```
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "cuda_available": true,
+  "cuda_devices": 1,
+  "queue_size": 0
+}
+```
 
 ### List All Processes (Debug)
+
+**Endpoint:** `GET /processes`
 
 ```bash
 curl http://localhost:8000/processes
 ```
 
-## Container Management
-
-### View logs
-```bash
-docker-compose logs -f
-```
-
-### Stop container
-```bash
-docker-compose down
-```
-
-### Restart container
-```bash
-docker-compose restart
-```
-
-### Rebuild container
-```bash
-docker-compose up -d --build
-```
-
-## Configuration
+## 🔧 Configuration
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `S3_BUCKET_NAME` | `storage.modera.fashion` | AWS S3 bucket name |
+| `S3_BUCKET_NAME` | - | AWS S3 bucket name (required) |
 | `S3_REGION` | `eu-central-2` | AWS S3 region |
-| `S3_ACCESS_KEY` | - | AWS Access Key (required) |
-| `S3_SECRET_KEY` | - | AWS Secret Key (required) |
+| `S3_ACCESS_KEY` | - | AWS access key (required) |
+| `S3_SECRET_KEY` | - | AWS secret key (required) |
+| `S3_ENDPOINT_URL` | - | S3-compatible endpoint (optional) |
 | `CUDA_VISIBLE_DEVICES` | `0` | GPU device ID |
-| `OUTPUT_BASE_DIR` | `/mnt/tank/scratch/edubskiy/outputs` | Output directory (temporary) |
-| `SCRIPT_PATH` | `/app/task.sh` | Path to generation script |
+| `HF_HOME` | `/app/data/huggingface_cache` | HuggingFace cache directory |
+| `OUTPUT_BASE_DIR` | `/app/data/outputs` | Temporary output directory |
 
-### Model Configuration
+### GPU Requirements
 
-The service uses HuggingFace models that are automatically downloaded on first use:
-- Default model: `Skywork/SkyReels-V2-I2V-14B-540P`
-- Models are cached in `data/huggingface_cache`
+| Resolution | VRAM Required | Recommended GPU |
+|-----------|---------------|----------------|
+| 540P | ~24GB | RTX 4090, A100-40GB, A6000 |
+| 720P | >60GB | A100-80GB, H100 |
 
-## Workflow
+## 🐳 Docker Management
 
-1. **Request** - Client sends POST to `/run` with image URL and prompt
-2. **Queue** - Request added to processing queue (sequential processing)
-3. **Process Image** - Image loaded from URL and automatically resized/cropped to 960x544
-4. **Generate** - Video generated using SkyReels-V1 model
-5. **Upload** - Video uploaded to AWS S3
-6. **Cleanup** - Local video file deleted after successful S3 upload
-7. **Response** - S3 URL returned to client
+### View Logs
 
-## Troubleshooting
-
-### CUDA/GPU issues
 ```bash
-# Check if GPU is accessible in container
-docker exec -it video-generation-api nvidia-smi
+docker-compose logs -f
 ```
 
-### Out of memory
-- Reduce `num_frames` in `task.sh` (default: 97)
-- Enable `--offload` flag (already enabled by default)
-- Use smaller resolution (currently: 540P)
+### Stop Container
 
-### S3 upload fails
+```bash
+docker-compose down
+```
+
+### Restart Container
+
+```bash
+docker-compose restart
+```
+
+### Rebuild Container
+
+```bash
+docker-compose up -d --build
+```
+
+### Check GPU in Container
+
+```bash
+docker exec -it skyreels-v2-api nvidia-smi
+```
+
+### Cleanup Docker Cache
+
+```bash
+# Remove all unused Docker resources
+docker system prune -a
+
+# For detailed cleanup commands, see DOCKER_CLEANUP.md
+```
+
+📖 **See [DOCKER_CLEANUP.md](DOCKER_CLEANUP.md) for comprehensive Docker cleanup guide**
+
+## 📊 Performance
+
+### Generation Times (with teacache)
+
+- **540P (97 frames)**: ~3-5 minutes on H100/A100
+- **720P (97 frames)**: ~5-8 minutes on H100/A100
+- **First run**: +5-10 minutes for model download
+
+### Optimization
+
+- **Teacache**: Enabled by default, reduces inference time by ~40%
+- **CPU Offload**: Enabled by default, reduces VRAM usage
+- **Resolution**: Use 540P for faster generation
+- **Inference Steps**: Reduce to 20-25 for faster (slightly lower quality)
+
+## 🛠️ Troubleshooting
+
+### GPU Not Detected
+
+```bash
+# Check NVIDIA drivers
+nvidia-smi
+
+# Check Docker GPU support
+docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
+```
+
+### Out of Memory
+
+- Use 540P instead of 720P
+- Reduce `num_frames` (e.g., 49 instead of 97)
+- Ensure `offload: true` (enabled by default)
+- Reduce `inference_steps` to 20-25
+
+### S3 Upload Fails
+
 - Verify AWS credentials in `.env`
-- Check S3 bucket permissions
+- Check bucket permissions (should allow PutObject)
 - Ensure bucket exists in specified region
 
-### Video generation fails
-- Check logs: `docker-compose logs -f`
-- Verify PyTorch and CUDA are properly installed
-- Check disk space in `data/` directories
+### Model Download Slow
 
-## Performance
+- Models are cached in `data/huggingface_cache`
+- First download: ~20-30GB for 14B models
+- Subsequent runs: instant (cached)
 
-- **First run**: ~10-15 minutes (model download)
-- **Subsequent runs**: ~2-5 minutes per video (depending on GPU)
-- **Memory**: Requires ~48-60GB GPU RAM
-- **Recommended GPU**: NVIDIA H100, T4, or better
+## 📁 Project Structure
 
-## License
+```
+Sky/
+├── skyreels_api.py         # Main FastAPI server
+├── Dockerfile              # Container definition
+├── docker-compose.yml      # Container orchestration
+├── requirements.txt        # Python dependencies
+├── env.example            # Environment template
+├── README.md              # This file
+├── API_EXAMPLES.md        # API usage examples
+├── SkyReels-V2/           # SkyReels-V2 model code (auto-cloned)
+└── data/                  # Persistent data (create this)
+    ├── outputs/           # Temporary video storage
+    └── huggingface_cache/ # Model cache
+```
 
-See `SkyReels-V1/LICENSE.txt` for SkyReels model license. 
+## 🔗 Links
+
+- [SkyReels-V2 Official Repository](https://github.com/SkyworkAI/SkyReels-V2)
+- [SkyReels-V2 Technical Report](https://arxiv.org/pdf/2504.13074)
+- [SkyReels-V2 Models on HuggingFace](https://huggingface.co/collections/Skywork/skyreels-v2-6801b1b93df627d441d0d0d9)
+- [SkyReels Playground](https://www.skyreels.ai)
+
+## 📝 License
+
+See `SkyReels-V2/LICENSE.txt` for SkyReels-V2 model license terms.
+
+## 🤝 Acknowledgements
+
+

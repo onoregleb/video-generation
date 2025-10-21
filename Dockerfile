@@ -1,40 +1,54 @@
-FROM nvidia/cuda:12.9.0-runtime-ubuntu22.04
+# SkyReels-V2 Video Generation Docker Image
+FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
 
-# Установка необходимых пакетов
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
+    python3.10 \
     python3-pip \
-    python3-dev \
-    wget \
-    ffmpeg \
     git \
+    wget \
+    curl \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Создание рабочей директории
+# Set working directory
 WORKDIR /app
 
-# Копирование файлов проекта
-COPY server_cloud.py task.sh requirements.txt ./
-COPY SkyReels-V1 ./SkyReels-V1
+# Clone SkyReels-V2 repository
+RUN git clone https://github.com/SkyworkAI/SkyReels-V2.git
 
-# Установка Python зависимостей для API сервера
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Установка PyTorch с поддержкой CUDA 12.4
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+# Copy application files
+COPY skyreels_api.py .
 
-# Установка зависимостей для SkyReels-V1
-RUN pip3 install --no-cache-dir -r SkyReels-V1/requirements.txt
+# Create data directories
+RUN mkdir -p /app/data/outputs /app/data/huggingface_cache
 
-# Создание необходимых директорий
-RUN mkdir -p /mnt/tank/scratch/edubskiy/outputs \
-    /mnt/tank/scratch/edubskiy/public_videos \
-    /mnt/tank/scratch/edubskiy/huggingface_cache
+# Set environment variables for caching
+ENV HF_HOME=/app/data/huggingface_cache
+ENV TRANSFORMERS_CACHE=/app/data/huggingface_cache
+ENV OUTPUT_BASE_DIR=/app/data/outputs
 
-# Делаем task.sh исполняемым
-RUN chmod +x task.sh
-
-# Expose API port
+# Expose port
 EXPOSE 8000
 
-# Запуск API сервера
-CMD ["uvicorn", "server_cloud:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application
+CMD ["python3", "-m", "uvicorn", "skyreels_api:app", "--host", "0.0.0.0", "--port", "8000"]
