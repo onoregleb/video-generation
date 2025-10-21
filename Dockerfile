@@ -1,5 +1,5 @@
 # SkyReels-V2 Video Generation Docker Image
-FROM nvidia/cuda:12.9.0-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:13.0.1-cudnn-devel-ubuntu24.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
