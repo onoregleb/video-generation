@@ -223,8 +223,8 @@ docker exec -it video-generation-api nvidia-smi
 
 - **First run**: ~10-15 minutes (model download)
 - **Subsequent runs**: ~2-5 minutes per video (depending on GPU)
-- **Memory**: Requires ~12-16GB GPU RAM
-- **Recommended GPU**: NVIDIA A10G, T4, or better
+- **Memory**: Requires ~48-60GB GPU RAM
+- **Recommended GPU**: NVIDIA H100, T4, or better
 
 ## License
 
