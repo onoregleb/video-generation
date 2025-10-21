@@ -127,7 +127,8 @@ def upload_to_s3(local_file_path: str, process_id: str, user_id: str) -> str:
         if S3_ENDPOINT_URL:
             video_url = f"{S3_ENDPOINT_URL}/{S3_BUCKET_NAME}/{s3_key}"
         else:
-            video_url = f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
+            # Use path-style URL for S3
+            video_url = f"https://s3.{S3_REGION}.amazonaws.com/{S3_BUCKET_NAME}/{s3_key}"
         
         return video_url
     except ClientError as e:
