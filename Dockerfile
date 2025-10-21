@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.9.0-runtime-ubuntu22.04
 
 # Установка необходимых пакетов
 RUN apt-get update && apt-get install -y \
