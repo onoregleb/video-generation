@@ -107,54 +107,6 @@ curl -X POST http://localhost:8000/status \
 }
 ```
 
-## Python Client Example
-
-```python
-import requests
-import time
-
-API_URL = "http://localhost:8000"
-
-def generate_video(image_url, resolution="540P", prompt=None):
-    # Start generation
-    response = requests.post(
-        f"{API_URL}/generate",
-        json={
-            "user_id": "test_user",
-            "image_url": image_url,
-            "resolution": resolution,
-            "prompt": prompt
-        }
-    )
-    process_id = response.json()["process_id"]
-    print(f"✅ Process started: {process_id}")
-    
-    # Poll status
-    while True:
-        status_resp = requests.post(
-            f"{API_URL}/status",
-            json={"process_id": process_id}
-        )
-        status = status_resp.json()
-        
-        if status["status"] == "done":
-            print(f"✅ Done! Video: {status['video_url']}")
-            return status["video_url"]
-        elif status["status"] == "failed":
-            print(f"❌ Failed: {status.get('error')}")
-            return None
-        else:
-            print(f"⏳ {status.get('message', status['status'])}")
-            time.sleep(5)
-
-# Usage
-video_url = generate_video(
-    image_url="https://example.com/portrait.jpg",
-    resolution="540P",
-    prompt="A woman touching her hair gracefully"
-)
-```
-
 ## Monitoring
 
 ### View Logs
