@@ -10,6 +10,11 @@ boto3>=1.18.0
 # HTTP requests
 requests>=2.25.0
 
+# Build dependencies (must be before flash-attn)
+packaging
+wheel
+setuptools
+
 # SkyReels-V2 Dependencies
 torch==2.5.1
 torchvision==0.20.1
