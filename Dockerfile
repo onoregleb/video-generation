@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
 
 # Установка необходимых пакетов
 RUN apt-get update && apt-get install -y \
@@ -19,8 +19,8 @@ COPY SkyReels-V1 ./SkyReels-V1
 # Установка Python зависимостей для API сервера
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Установка PyTorch с поддержкой CUDA 12.1
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Установка PyTorch с поддержкой CUDA 12.4
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 
 # Установка зависимостей для SkyReels-V1
 RUN pip3 install --no-cache-dir -r SkyReels-V1/requirements.txt
