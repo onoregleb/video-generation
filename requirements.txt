@@ -29,4 +29,4 @@ decord
 
 # Optional: Flash Attention for faster inference (requires CUDA)
 # Uncomment if you have compatible GPU
-# flash_attn
+flash-attn
