@@ -9,7 +9,8 @@ IMAGE_PATH=${IMAGE_PATH:-"asia_try.png"}
 PROCESS_ID=${PROCESS_ID:-"test_process"}
 
 # Создаем директорию для результатов
-OUTPUT_DIR="/mnt/tank/scratch/edubskiy/outputs/${USER_ID}/${PROCESS_ID}"
+OUTPUT_BASE_DIR=${OUTPUT_BASE_DIR:-"/mnt/tank/scratch/edubskiy/outputs"}
+OUTPUT_DIR="${OUTPUT_BASE_DIR}/${USER_ID}/${PROCESS_ID}"
 mkdir -p "$OUTPUT_DIR"
 
 echo "=========================================="
@@ -24,8 +25,8 @@ echo "Выходная директория: $OUTPUT_DIR"
 echo "=========================================="
 
 # Настройка HuggingFace cache
-export HF_HOME=/mnt/tank/scratch/edubskiy/huggingface_cache
-export TRANSFORMERS_CACHE=$HF_HOME
+export HF_HOME=${HF_HOME:-"/mnt/tank/scratch/edubskiy/huggingface_cache"}
+export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-$HF_HOME}
 mkdir -p $HF_HOME
 
 # Проверка наличия Python и pip

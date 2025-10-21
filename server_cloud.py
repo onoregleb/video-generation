@@ -117,6 +117,7 @@ def run_video_generation(process_id: str, user_id: str, model_image: str, prompt
         env["PROCESS_ID"] = process_id
         env["USER_ID"] = user_id
         env["MODEL_IMAGE"] = model_image
+        env["OUTPUT_BASE_DIR"] = OUTPUT_BASE_DIR  # Ensure it's passed to task.sh
         if prompt:
             env["PROMPT"] = prompt
         # Pass image URL directly - diffusers' load_image() supports URLs
