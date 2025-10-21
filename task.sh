@@ -3,7 +3,7 @@ set -e
 
 # Получаем параметры из переменных окружения
 USER_ID=${USER_ID:-"default_user"}
-MODEL_IMAGE=${MODEL_IMAGE:-"Skywork/SkyReels-V2-I2V-14B-540P"}
+MODEL_IMAGE=${MODEL_IMAGE:-"Skywork/SkyReels-V1-Hunyuan-I2V"}
 PROMPT=${PROMPT:-"Default prompt for video generation"}
 IMAGE_PATH=${IMAGE_PATH:-"asia_try.png"}
 PROCESS_ID=${PROCESS_ID:-"test_process"}
