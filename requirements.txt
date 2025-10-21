@@ -25,6 +25,7 @@ easydict
 ftfy
 numpy>=1.23.5,<2
 xfuser
+decord
 
 # Optional: Flash Attention for faster inference (requires CUDA)
 # Uncomment if you have compatible GPU
