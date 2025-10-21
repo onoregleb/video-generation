@@ -60,6 +60,13 @@ curl -X POST http://localhost:8000/run \
   }'
 ```
 
+curl -X POST http://localhost:8000/generate   -H "Content-Type: application/json"   -d '{
+    "user_id": "test_user",
+    "image_url": "https://i.pinimg.com/736x/70/11/d1/7011d1242b1e366041e42d662225fb20.jpg",
+    "resolution": "540P",
+    "prompt": "A beautiful woman touches her hair"
+  }'
+
 ## 📖 Полная документация
 
 - [README.md](README.md) - Основная документация

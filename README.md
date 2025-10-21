@@ -18,7 +18,7 @@ Production-ready Docker-based Image-to-Video service using **SkyReels-V2**. Simp
 ## 📋 Prerequisites
 
 - Docker & Docker Compose
-- NVIDIA GPU with CUDA support (12.1+)
+- NVIDIA GPU with CUDA support (12.8)
 - NVIDIA Container Toolkit
 - AWS S3 bucket (or S3-compatible storage)
 - Minimum 50GB GPU RAM for 14B models
@@ -234,24 +234,11 @@ curl http://localhost:8000/processes
 
 ## 🔧 Configuration
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `S3_BUCKET_NAME` | - | AWS S3 bucket name (required) |
-| `S3_REGION` | `eu-central-2` | AWS S3 region |
-| `S3_ACCESS_KEY` | - | AWS access key (required) |
-| `S3_SECRET_KEY` | - | AWS secret key (required) |
-| `S3_ENDPOINT_URL` | - | S3-compatible endpoint (optional) |
-| `CUDA_VISIBLE_DEVICES` | `0` | GPU device ID |
-| `HF_HOME` | `/app/data/huggingface_cache` | HuggingFace cache directory |
-| `OUTPUT_BASE_DIR` | `/app/data/outputs` | Temporary output directory |
-
 ### GPU Requirements
 
 | Resolution | VRAM Required | Recommended GPU |
 |-----------|---------------|----------------|
-| 540P | ~24GB | RTX 4090, A100-40GB, A6000 |
+| 540P | ~46GB | RTX 4090, A100-40GB, A6000 |
 | 720P | >60GB | A100-80GB, H100 |
 
 ## 🐳 Docker Management
@@ -280,19 +267,12 @@ docker-compose restart
 docker-compose up -d --build
 ```
 
-### Check GPU in Container
-
-```bash
-docker exec -it skyreels-v2-api nvidia-smi
-```
-
 ### Cleanup Docker Cache
 
 ```bash
 # Remove all unused Docker resources
 docker system prune -a
 
-# For detailed cleanup commands, see DOCKER_CLEANUP.md
 ```
 
 📖 **See [DOCKER_CLEANUP.md](DOCKER_CLEANUP.md) for comprehensive Docker cleanup guide**
@@ -312,24 +292,6 @@ docker system prune -a
 - **Resolution**: Use 540P for faster generation
 - **Inference Steps**: Reduce to 20-25 for faster (slightly lower quality)
 
-## 🛠️ Troubleshooting
-
-### GPU Not Detected
-
-```bash
-# Check NVIDIA drivers
-nvidia-smi
-
-# Check Docker GPU support
-docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
-```
-
-### Out of Memory
-
-- Use 540P instead of 720P
-- Reduce `num_frames` (e.g., 49 instead of 97)
-- Ensure `offload: true` (enabled by default)
-- Reduce `inference_steps` to 20-25
 
 ### S3 Upload Fails
 
@@ -359,18 +321,5 @@ Sky/
     ├── outputs/           # Temporary video storage
     └── huggingface_cache/ # Model cache
 ```
-
-## 🔗 Links
-
-- [SkyReels-V2 Official Repository](https://github.com/SkyworkAI/SkyReels-V2)
-- [SkyReels-V2 Technical Report](https://arxiv.org/pdf/2504.13074)
-- [SkyReels-V2 Models on HuggingFace](https://huggingface.co/collections/Skywork/skyreels-v2-6801b1b93df627d441d0d0d9)
-- [SkyReels Playground](https://www.skyreels.ai)
-
-## 📝 License
-
-See `SkyReels-V2/LICENSE.txt` for SkyReels-V2 model license terms.
-
-## 🤝 Acknowledgements
 
 
