@@ -111,7 +111,6 @@ curl -X POST http://localhost:8000/status \
 ```json
 {
   "status": "processing",
-  "message": "Starting video generation",
   "user_id": "test_user"
 }
 ```
@@ -120,8 +119,9 @@ curl -X POST http://localhost:8000/status \
 ```json
 {
   "status": "done",
+  "user_id": "test_user",
   "video_url": "https://your-bucket.s3.region.amazonaws.com/videos/user_id/process_id.mp4",
-  "message": "Video uploaded to S3"
+  "generation_time_seconds": 222.22
 }
 ```
 
@@ -129,9 +129,14 @@ curl -X POST http://localhost:8000/status \
 ```json
 {
   "status": "failed",
-  "error": "Error message description"
+  "user_id": "test_user",
+  "error": "Error message description",
+  "generation_time_seconds": 54.33
 }
 ```
+
+**Time Tracking:**
+- `generation_time_seconds`: Total time taken for video generation in seconds (also logged to console)
 
 ### List All Processes (Debug)
 

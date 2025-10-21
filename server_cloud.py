@@ -50,6 +50,7 @@ class VideoGenerationResult(BaseModel):
     video_url: Optional[str] = None
     error: Optional[str] = None
     slurm_job_id: Optional[str] = None
+    generation_time_seconds: Optional[float] = None
 
 def get_s3_client():
     """Create and return an S3 client"""
@@ -103,11 +104,13 @@ def run_video_generation(process_id: str, user_id: str, model_image: str, prompt
     """Run video generation directly using subprocess"""
     try:
         # Update status to "processing"
+        start_time = time.time()
         process_status[process_id] = {
             "status": "processing",
-            "start_time": time.time(),
+            "start_time": start_time,
             "user_id": user_id
         }
+        print(f"Starting video generation for process {process_id} at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
         
         # Prepare environment variables for task.sh
         env = os.environ.copy()
@@ -137,10 +140,14 @@ def run_video_generation(process_id: str, user_id: str, model_image: str, prompt
         
         if result.returncode != 0:
             error_msg = result.stderr if result.stderr else "Unknown error during video generation"
-            print(f"Video generation failed: {error_msg}")
+            end_time = time.time()
+            start_time = process_status[process_id].get("start_time", end_time)
+            generation_time = end_time - start_time
+            print(f"Video generation failed after {generation_time:.2f} seconds: {error_msg}")
             process_status[process_id].update({
                 "status": "failed",
-                "error": error_msg
+                "error": error_msg,
+                "generation_time_seconds": round(generation_time, 2)
             })
             return
         
@@ -171,38 +178,68 @@ def run_video_generation(process_id: str, user_id: str, model_image: str, prompt
                     except Exception as e:
                         print(f"Warning: Failed to delete local video file: {e}")
                     
+                    # Calculate generation time
+                    end_time = time.time()
+                    start_time = process_status[process_id].get("start_time", end_time)
+                    generation_time = end_time - start_time
+                    
                     process_status[process_id].update({
                         "status": "done",
                         "video_url": s3_url,
-                        "message": "Video uploaded to S3"
+                        "message": "Video uploaded to S3",
+                        "generation_time_seconds": round(generation_time, 2)
                     })
-                    print(f"Video generation completed successfully: {s3_url}")
+                    print(f"Video generation completed successfully in {generation_time:.2f} seconds ({generation_time/60:.2f} minutes): {s3_url}")
                 else:
+                    end_time = time.time()
+                    start_time = process_status[process_id].get("start_time", end_time)
+                    generation_time = end_time - start_time
+                    print(f"Video file not found after {generation_time:.2f} seconds")
                     process_status[process_id].update({
                         "status": "failed",
-                        "error": "Video file not found after generation"
+                        "error": "Video file not found after generation",
+                        "generation_time_seconds": round(generation_time, 2)
                     })
             else:
+                end_time = time.time()
+                start_time = process_status[process_id].get("start_time", end_time)
+                generation_time = end_time - start_time
+                print(f"Video generation failed after {generation_time:.2f} seconds: {status_data.get('error', 'Unknown error')}")
                 process_status[process_id].update({
                     "status": "failed",
-                    "error": status_data.get("error", "Unknown error")
+                    "error": status_data.get("error", "Unknown error"),
+                    "generation_time_seconds": round(generation_time, 2)
                 })
         else:
+            end_time = time.time()
+            start_time = process_status[process_id].get("start_time", end_time)
+            generation_time = end_time - start_time
+            print(f"Status file not found after {generation_time:.2f} seconds")
             process_status[process_id].update({
                 "status": "failed",
-                "error": "Status file not found after video generation"
+                "error": "Status file not found after video generation",
+                "generation_time_seconds": round(generation_time, 2)
             })
             
     except subprocess.TimeoutExpired:
+        end_time = time.time()
+        start_time = process_status[process_id].get("start_time", end_time)
+        generation_time = end_time - start_time
+        print(f"Video generation timed out after {generation_time:.2f} seconds")
         process_status[process_id] = {
             "status": "failed",
-            "error": "Video generation timed out (exceeded 1 hour)"
+            "error": "Video generation timed out (exceeded 1 hour)",
+            "generation_time_seconds": round(generation_time, 2)
         }
     except Exception as e:
-        print(f"Exception in run_video_generation: {str(e)}")
+        end_time = time.time()
+        start_time = process_status[process_id].get("start_time", end_time)
+        generation_time = end_time - start_time
+        print(f"Exception in run_video_generation after {generation_time:.2f} seconds: {str(e)}")
         process_status[process_id] = {
             "status": "failed",
-            "error": str(e)
+            "error": str(e),
+            "generation_time_seconds": round(generation_time, 2)
         }
 # Очередь задач и воркер
 job_queue = queue.Queue()
@@ -257,8 +294,28 @@ def get_status(req: StatusRequest):
     if req.process_id not in process_status:
         raise HTTPException(status_code=404, detail="Process not found")
     
-    # Return current status
-    return process_status[req.process_id]
+    # Get full status
+    full_status = process_status[req.process_id]
+    
+    # Return only required fields
+    response = {
+        "status": full_status.get("status"),
+        "user_id": full_status.get("user_id")
+    }
+    
+    # Add video_url if available
+    if "video_url" in full_status:
+        response["video_url"] = full_status["video_url"]
+    
+    # Add generation_time_seconds if available
+    if "generation_time_seconds" in full_status:
+        response["generation_time_seconds"] = full_status["generation_time_seconds"]
+    
+    # Add error if failed
+    if full_status.get("status") == "failed" and "error" in full_status:
+        response["error"] = full_status["error"]
+    
+    return response
 
 @app.get("/processes")
 def list_processes():
