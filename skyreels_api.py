@@ -330,16 +330,23 @@ def generate_video(
         print(f"{'='*60}\n")
         
     except Exception as e:
+        import traceback
         end_time = time.time()
         start_time_val = process_status.get(process_id, {}).get("start_time", end_time)
         total_time = end_time - start_time_val
         
-        error_msg = str(e)
-        print(f"\n❌ Error in video generation after {total_time:.2f} seconds: {error_msg}")
+        error_msg = str(e) if str(e) else repr(e)
+        error_trace = traceback.format_exc()
+        
+        print(f"\n❌ Error in video generation after {total_time:.2f} seconds:")
+        print(f"Error message: {error_msg}")
+        print(f"Full traceback:\n{error_trace}")
         
         process_status[process_id] = {
             "status": "failed",
             "error": error_msg,
+            "error_type": type(e).__name__,
+            "traceback": error_trace,
             "generation_time_seconds": round(total_time, 2),
             "user_id": user_id
         }
@@ -436,8 +443,13 @@ def get_status(req: StatusRequest):
     if "generation_time_seconds" in full_status:
         response["generation_time_seconds"] = full_status["generation_time_seconds"]
     
-    if full_status.get("status") == "failed" and "error" in full_status:
-        response["error"] = full_status["error"]
+    if full_status.get("status") == "failed":
+        if "error" in full_status:
+            response["error"] = full_status["error"]
+        if "error_type" in full_status:
+            response["error_type"] = full_status["error_type"]
+        if "traceback" in full_status:
+            response["traceback"] = full_status["traceback"]
     
     if "message" in full_status:
         response["message"] = full_status["message"]
