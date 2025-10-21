@@ -96,13 +96,18 @@ def get_s3_client():
         raise Exception("S3 credentials not configured")
     
     session = boto3.session.Session()
-    s3_client = session.client(
-        service_name='s3',
-        region_name=S3_REGION,
-        aws_access_key_id=S3_ACCESS_KEY,
-        aws_secret_access_key=S3_SECRET_KEY,
-        endpoint_url=S3_ENDPOINT_URL
-    )
+    client_config = {
+        'service_name': 's3',
+        'region_name': S3_REGION,
+        'aws_access_key_id': S3_ACCESS_KEY,
+        'aws_secret_access_key': S3_SECRET_KEY,
+    }
+    
+    # Only add endpoint_url if it's not empty
+    if S3_ENDPOINT_URL and S3_ENDPOINT_URL.strip():
+        client_config['endpoint_url'] = S3_ENDPOINT_URL
+    
+    s3_client = session.client(**client_config)
     return s3_client
 
 
