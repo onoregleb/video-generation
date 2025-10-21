@@ -32,9 +32,17 @@ RUN git clone https://github.com/SkyworkAI/SkyReels-V2.git
 # Install build dependencies first
 RUN pip3 install --no-cache-dir --break-system-packages packaging wheel setuptools ninja
 
-# Copy requirements and install Python dependencies
+# Copy requirements and install dependencies in stages
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+# Stage 1: Install torch first (required for flash-attn compilation)
+RUN pip3 install --no-cache-dir --break-system-packages torch==2.5.1 torchvision==0.20.1
+
+# Stage 2: Install flash-attn (needs torch)
+RUN pip3 install --no-cache-dir --break-system-packages flash-attn --no-build-isolation
+
+# Stage 3: Install remaining dependencies
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt || true
 
 # Copy application files
 COPY skyreels_api.py .

@@ -10,14 +10,10 @@ boto3>=1.18.0
 # HTTP requests
 requests>=2.25.0
 
-# Build dependencies (must be before flash-attn)
-packaging
-wheel
-setuptools
+# Build dependencies (installed separately in Dockerfile)
+# packaging, wheel, setuptools, ninja, torch, torchvision, flash-attn
 
 # SkyReels-V2 Dependencies
-torch==2.5.1
-torchvision==0.20.1
 opencv-python==4.10.0.84
 diffusers>=0.31.0
 transformers==4.49.0
@@ -31,7 +27,3 @@ ftfy
 numpy>=1.23.5,<2
 xfuser
 decord
-
-# Optional: Flash Attention for faster inference (requires CUDA)
-# Uncomment if you have compatible GPU
-flash-attn
