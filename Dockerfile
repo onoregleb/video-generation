@@ -10,8 +10,9 @@ ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3.10 \
+    python3 \
     python3-pip \
+    python3-venv \
     git \
     wget \
     curl \
@@ -30,7 +31,7 @@ RUN git clone https://github.com/SkyworkAI/SkyReels-V2.git
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Copy application files
 COPY skyreels_api.py .
