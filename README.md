@@ -2,18 +2,6 @@
 
 Production-ready Docker-based Image-to-Video service using **SkyReels-V2**. Simplified API for converting images to videos with 540P and 720P resolution support.
 
-## 🌟 Features
-
-- **State-of-the-art** Image-to-Video generation using SkyReels-V2
-- **Automatic image resizing** based on selected resolution
-- **540P and 720P** resolution support
-- **Optional prompts** - use default or provide custom prompts
-- **Direct diffusers integration** - no shell scripts required
-- **GPU-accelerated** with CUDA support
-- **AWS S3 integration** for video storage
-- **Queue-based processing** for multiple concurrent requests
-- **Docker containerization** for easy deployment
-- **RESTful API** with FastAPI
 
 ## 📋 Prerequisites
 
@@ -147,14 +135,6 @@ curl -X POST http://localhost:8000/generate \
 | `use_ret_steps` | bool | `true` | Retention steps for quality |
 | `offload` | bool | `true` | CPU offloading to save VRAM |
 
-### Automatic Image Resizing
-
-The API automatically resizes images based on the selected resolution:
-
-- **540P**: 960x544 (landscape) or 544x960 (portrait)
-- **720P**: 1280x720 (landscape) or 720x1280 (portrait)
-
-Portrait images are automatically converted to vertical videos, landscape images to horizontal videos.
 
 ### Supported Resolutions
 
@@ -275,24 +255,6 @@ docker system prune -a
 
 ```
 
-📖 **See [DOCKER_CLEANUP.md](DOCKER_CLEANUP.md) for comprehensive Docker cleanup guide**
-
-## 📊 Performance
-
-### Generation Times (with teacache)
-
-- **540P (97 frames)**: ~3-5 minutes on H100/A100
-- **720P (97 frames)**: ~5-8 minutes on H100/A100
-- **First run**: +5-10 minutes for model download
-
-### Optimization
-
-- **Teacache**: Enabled by default, reduces inference time by ~40%
-- **CPU Offload**: Enabled by default, reduces VRAM usage
-- **Resolution**: Use 540P for faster generation
-- **Inference Steps**: Reduce to 20-25 for faster (slightly lower quality)
-
-
 ### S3 Upload Fails
 
 - Verify AWS credentials in `.env`
@@ -321,5 +283,3 @@ Sky/
     ├── outputs/           # Temporary video storage
     └── huggingface_cache/ # Model cache
 ```
-
-
