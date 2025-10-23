@@ -389,7 +389,7 @@ worker_thread = threading.Thread(target=queue_worker, daemon=True)
 worker_thread.start()
 
 
-@app.post("/generate")
+@app.post("/v1/video-generate")
 async def generate(req: Image2VideoRequest):
     """Submit an image-to-video generation job"""
     process_id = req.process_id if req.process_id else str(uuid.uuid4())
@@ -430,7 +430,7 @@ async def generate(req: Image2VideoRequest):
     return {"process_id": process_id}
 
 
-@app.post("/status")
+@app.post("/v1/status")
 def get_status(req: StatusRequest):
     """Get the status of a video generation job"""
     if req.process_id not in process_status:
